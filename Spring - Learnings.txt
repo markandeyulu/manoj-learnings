@@ -1,0 +1,166 @@
+IOC - In configuration class, we will have component scan -- whatever packages under wit, will be scanned for @component tag and that will be stored in spring container 
+	and we can get that with getBean method of context.
+	
+Dependency injection : 
+
+A bean which is already present in Spring container will be placed in another bean without calling "new" or getBean method. 
+That will be injected automatically.
+
+2 types : 
+1. Constructor based
+2. Setter based
+
+Constructor based : 
+In any class, when it get instantiated, If that class constructor has only the already present object from container, that will be injected. 
+
+I am calling RentalService rentalService1 = (RentalService) context.getBean(RentalService.class);
+Ex 
+	RentalService(StoreLocater storeLocator) {
+		this.storeLocator = storeLocator;
+	}
+	
+	or 
+	
+		RentalService(StoreLocater storeLocator, StoreLocater test) {
+		this.storeLocator = storeLocator;
+		this.test = test;
+	}
+	
+But below is not allowed since String is not a qualifying bean
+RentalService(StoreLocater storeLocator, String test) {
+		this.storeLocator = storeLocator;
+		this.test = test;
+	}
+	
+-- If 2 valid constructors present, compiler will look for default constructor only. 
+
+
+Setter based injection : 
+		
+		RentalService rentalService1 = (RentalService) context.getBean(RentalService.class);		
+		rentalService1.setStoreLocator(context.getBean(StoreLocater.class));  //context.getBean(StoreLocater.class) -- we do get the bean object from ontainer manually
+		
+		public void setStoreLocator(StoreLocater storeLocator) {
+		System.out.println("Setter called");
+		this.storeLocator = storeLocator;
+			}
+			
+Autowired can be a replacement for both the above approaches : We can do the same simply using autowired
+	@Autowired
+	private StoreLocater storeLocator;
+	
+**Autowire - is not for premitive types and only for objects
+	
+Bean : 
+What is Bean ? 
+	Instead of compiler scans component on every class, we also can tell container to create a bean for a class and store it in a container. 
+	
+	During bean creation, the method name will be the object name in compiler. we can create our own name for bean.
+Autowiring: 
+	Autowire types - ByName, ByType, By Constructor and default 
+	
+Spring Bean Autowiring
+The default autowire mode in XML configuration is no .
+The default autowire mode in java configuration is byType .
+
+		Compiler will look for by type initially. If by type matches more, it will look for by name ( bean name or the method name will be the object name in container ).
+		If by name does not match, it will throw error. in case we need a diff variable name so that the bean name cant be matched, use 
+		
+		@Autowired
+		@Qualifier("sl") // sl is a bean name
+		StoreLocater sl5;
+@Qualifier is not needed if you use same name of bean.
+
+@component will create bean with camel case. 
+Rest is same - bean name/methodname will be the created bean names. 
+	
+	We can create multiple bean for a same class if needed.
+	
+Scope : We can set at the class level or bean level as well. 
+		- default is singleton. all 5 are singleton, prototype, request, session, global-session.
+		- Whatever we set in class level ( default is singleton ), the bean scope should be lower order to that.
+		Order : global-session --> Session --> Request --> Prototype --> Singleton
+	
+	
+	
+	
+	
+2021-05-29 :
+
+@Configuration  should be  there for config class - main
+@ComponentScan(basePackages = { "com.FaceBook.Locator" , "com.FaceBook.Service", "com.FaceBook.App"})// If all classes under (parent) this, this is not needed
+
+PropertySource :
+@PropertySource(value= {"classpath:/resources/application.properties"}) //To initialize the property value to be used in classes 
+// Can be given multiple file seperated with comma // read more about it
+-- This should be in confoguration class
+
+	how to read the property ? 
+	@Autowired
+	Environment env;
+	String name = env.getProperty("user.names");
+	
+	// Priority Order is  propertySources=[systemProperties,systemEnvironment,class path resource [resources/application.properties]]}
+	
+	
+	
+	
+How NGP loads ?
+
+The request when it comes, it will hit web.xml first since its a webmvc.
+in web.xml we will have the disptacher servlet mapping.
+	<servlet>
+		<servlet-name>dispatch</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>dispatch</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping> 
+	
+	Similar to this, we can have n number of dispatcher servlet for our convenience(for diff paths. and as many dispatch{x}-servlet.xml 
+	For all these dispatch servlet xmls, we can have a common xml for bean creation and other jobs which is called applicationcontext.xml.
+	
+	
+How we can acheive this webmvc in java ? 
+
+Create a class implementing WebApplicationInitializer
+override onStartup
+		AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext(); // see AnnotationConfigWebApplicationContext not AnnotationConfigApplicationContext
+		context.register(WebConfigFile.class);
+		ServletRegistration.Dynamic registerServlet = servletContext.addServlet("dispatcherServlet",
+				new DispatcherServlet(context));
+		registerServlet.setLoadOnStartup(1);
+		registerServlet.addMapping("/");
+		
+In the WebConfigFile class need to have @configuration and @EnableWebMvc and @componenscan
+
+
+
+@Profile - 
+
+Based on profile name, we can initialise a bean
+keep spring.profiles.active=testing for example 
+and use @Profile("testing") to create bean only on test env. 
+
+another way to set - context.getEnvironment().setActiveProfiles("production");
+
+Profie vs environment - profile is or bean creation based on env. environment is simply to read properties. 
+
+context.refresh() - Other than registering, if you need to set anything related to properties you need to refresh
+
+View resolver : 2 things - 
+1 - Used in ModelAndView to resolve the view name
+2 - If @ResponseBody is not mentioned, compiler will not know how to send the response, then the view resolver will help to construct the response URL as below sample
+
+	@ExceptionHandler(Exception.class)//unhandled exceptions will be handled here. 
+	public String pleaseHandle(HttpServletRequest request, Exception e)
+	{
+		//return "/WEB-INF/views/error.jsp";//web assembly need to set with /webapp folder to access web pages - local config
+		// This return statement will be as String "/WEB-INF/views/error.jsp" in browser if we use @RestController. because rest controller will consider this as string. 
+		//If you use @controller you will be redirected to the respective jsp/html. In this case, we will have issue if we dont add @responsebody
+		//view resolver can give option to give generic names. html/jsp etc
+		return "error";// it will look for ViewResolver (in config file. in our case its InternalResourceViewResolver)
+	}
+	If @ResponseBody is there, text message will be given in response. 

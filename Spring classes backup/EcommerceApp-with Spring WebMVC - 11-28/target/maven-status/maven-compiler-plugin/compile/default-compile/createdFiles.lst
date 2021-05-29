@@ -1,0 +1,7 @@
+com\amazon\app\DispatcherServletInitializer.class
+com\amazon\app\beans\Product.class
+com\amazon\app\controller\ProductController.class
+com\amazon\app\dao\ProductDAO.class
+com\amazon\app\ProductApp.class
+com\amazon\app\services\ProductService.class
+com\amazon\app\WebConfigFile.class

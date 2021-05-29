@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+
+	<session-factory><!--  This is session factory code. This xml will be handed over to session factory. This is like passing xml file(config file/class) to Application context in spring. -->
+        <property name="hibernate.connection.driver_class">oracle.jdbc.OracleDriver</property>
+        <property name="hibernate.connection.url">jdbc:oracle:thin:@10.30.130.52:1521:orcl</property>
+        <property name="hibernate.connection.username">test31</property>
+        <property name="hibernate.connection.password">oracle</property>
+        <property name="hibernate.show_sql">true</property> <!-- to see the query by hibernate created query in debug -->
+        <property name="hibernate.dialect">org.hibernate.dialect.Oracle9iDialect</property><!-- which DB we are going to connect with. which lang to speak to DB -->
+        <!-- <mapping resource="book.hbm.xml" /> Table will be created via xml instead class in this case. old one . hbm - hibernate mapping. In this case we are going via below line - class-->
+         <property name="hibernate.hbm2ddl.auto">create</property> <!-- very first time when you run it will create the table. we are letting hibernate to create table. from next time it will drop and create again in this case. Hibernate will generate query Hibernate: create table Product (prodId number(10,0) not null, prodName varchar2(255 char), prodPrice float not null, primary key (prodId))-->
+        <mapping class="com.hibernate.demo.Product" /><!-- Table will be created by Hibernate. Hibernate: create table Product (prodId number(10,0) not null, prodName varchar2(255 char), prodPrice float not null, primary key (prodId))-->
+    
+    
+    </session-factory>
+
+</hibernate-configuration>
