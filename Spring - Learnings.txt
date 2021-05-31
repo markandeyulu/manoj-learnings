@@ -164,3 +164,90 @@ View resolver : 2 things -
 		return "error";// it will look for ViewResolver (in config file. in our case its InternalResourceViewResolver)
 	}
 	If @ResponseBody is there, text message will be given in response. 
+	
+	
+	
+2021-05-30
+
+Annotations : 
+
+@Controller = @Component belonging to Presentation Layer
+@Service = @Component belonging to Service/Use Case Layer
+@Repository = @Component belonging to Persistence Layer
+@Component is generic for other stereotypes - like beans.
+you can annotate your component classes with @Component, but, by annotating them with @Repository, @Service, or @Controller instead, your classes are more properly suited for processing by tools or associating with aspects.
+For example, these stereotype annotations make ideal targets for pointcuts. @Repository, @Service, and @Controller can also carry additional semantics in future releases of the Spring Framework. Thus, if you are choosing between using @Component or @Service for your service layer, @Service is clearly the better choice. Similarly, as stated earlier, @Repository is already supported as a marker for automatic exception translation in your persistence layer.
+
+@Controller is used to mark classes as Spring MVC Controller.
+@RestController is a convenience annotation that does nothing more than adding the @Controller and @ResponseBody annotations (
+
+@ResponseBody - This will just srite the response to the output stream and nothing else. In NGP, we dont do this way, we directly write to output stream.
+In @responsebody we dont have any other attributes. 
+Where we can set the produces, consumes details ? 
+We can use Mapping annotations for that. 
+	@GetMapping, @PostMapping, @RequestMapping
+	
+	@GetMapping(value = "/getproduct/{id}", consumes = "text/plain", produces = MediaType.APPLICATION_JSON_VALUE) -- application/json
+		public String getMessage(@PathVariable String id) {
+		return "Welcome :  " + id;
+	}
+	
+	
+If @responsebody is not given, Spring will not write it to output stream. It will look to resolve the response content. 
+If its a string, it will look for resolving jsp
+// This shoud be set in configuration class
+	@Bean
+	public InternalResourceViewResolver getResolved() { 
+		InternalResourceViewResolver irvr = new InternalResourceViewResolver();
+		irvr.setPrefix("/WEB-INF/views/");
+		irvr.setSuffix(".jsp");
+		return irvr;
+	}
+	
+If response body given or not, This will work for ModelAndView same way. We can return ModelAndView as well in the response. 
+	@GetMapping("/getproduct1") // same way we have postmapping and rest. latest usage
+	public ModelAndView getMessage1() {
+		ModelAndView mv = new ModelAndView("Welcome");
+		mv.addObject("message1", "MESSAGE1");
+		mv.addObject("message2", "MESSAGE2");
+		return mv;
+	}
+For ModelAndView we dont need response body. 
+
+<html>
+<body>
+	Welcome message is : ${message1}
+	2nd Welcome message is : ${message2}
+</body>
+</html>
+
+@component will be there on all below annotations
+@Service
+@Controller
+@Repository
+@RestController
+@Configuration
+
+
+List of annotations:
+@component
+@Service
+@Controller
+@Repository
+@RestController
+@Configuration
+
+@RequestBody - we can have an object and whoever calls the service nedt o send that object. It will be used in POST. 
+@ResponseBody
+@GetMapping
+@PostMapping
+@RequestMapping
+@PathVariable
+
+@Bean
+@Qualified
+@Profile
+@Autowired
+@Scope
+@ExceptionHandler
+@RequestParam - @RequestParam(required = false, value = "geoKey") String geoKey or @RequestParam String geoKey ( but this is mandatory )
