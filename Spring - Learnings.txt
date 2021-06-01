@@ -251,3 +251,137 @@ List of annotations:
 @Scope
 @ExceptionHandler
 @RequestParam - @RequestParam(required = false, value = "geoKey") String geoKey or @RequestParam String geoKey ( but this is mandatory )
+
+
+ServletContext --> Dispatcher --> AnnotationContext(Webconfig file)
+
+
+Handler Mapping : 
+
+HandlerMapping is an interface that defines a mapping between requests and handler objects.
+
+BeanNameUrlHandlerMapping:
+
+By default handler mapping is BeanNameUrlHandlerMapping and DefaultAnnotationHandlerMapping.
+ In config file
+
+ @Bean
+	public BeanNameUrlHandlerMapping getBeanNameUrlHandlerMapping() {
+		return new BeanNameUrlHandlerMapping();
+	}
+	
+	@Bean("/testbeannamemapping*")
+	public ProductController2 getProductController2() {
+		return new ProductController2();
+	}
+	
+	-- now if we recive any request as /testbeannamemapping*, it will be redicted to ProductController2. In ProductController2, that should extend the AbstractContrller and we have override a method called handleRequestInternal
+	
+	@Override
+	 protected ModelAndView handleRequestInternal(HttpServletRequest request,
+	            HttpServletResponse response) throws Exception {
+		ModelAndView mv = new ModelAndView("Welcome");
+		mv.addObject("message1", "MESSAGE1");
+		mv.addObject("message2", "MESSAGE2");
+		return mv;
+	}
+	
+	-- Bean name does not need to be started with /.
+	
+	
+SimpleUrlHandlerMapping : 
+
+Its straight forward. We can use this handler mapping to map the url name to bean name of the controller(case sensitive). 
+	@Bean
+	public SimpleUrlHandlerMapping getSimpleUrlHandlerMapping() {
+		SimpleUrlHandlerMapping shm = new SimpleUrlHandlerMapping();
+		Properties mappings = new Properties();
+		mappings.setProperty("marktestsimpleURL", "ProductController2");
+		shm.setMappings(mappings);
+		return shm;
+	}
+	
+	-- Bean name does not need to be started with /.Its an optional. /marktestsimpleURL or marktestsimpleURL.
+	
+ControllerClassNameHandlerMapping:
+
+	@Bean
+	public ControllerClassNameHandlerMapping getControllerClassNameHandlerMapping() {
+		return new ControllerClassNameHandlerMapping();
+	}
+	If the controller is HelloController, we can give url with /hello, /helloWorld anything like that should work. 
+	Additionally, you can specify a prefix to maps the requested URL, declared a “pathPrefix” property.
+	In case if we dont want to be case sensitive, we can set a propertu to make it false. 
+	by default I think its true. 
+
+
+DefaultAnnotationHandlerMapping
+ - Implementation of the HandlerMapping interface that maps handlers based on HTTP paths expressed through the RequestMapping annotation at the type or method level.
+ - This later replaced by RequestMappingHandlerMapping
+ - You should replace those classes by RequestMappingHandlerMapping and RequestMappingHandlerAdapter if you are using Spring 3.1 and higher. 
+
+
+Handler adapters in Spring mvc : 
+SimpleControllerHandlerAdapter - default
+SimpleServletHandlerAdapter
+HttpRequestHandlerAdapter
+AnnotationMethodHandlerAdapter - default
+later replaced by RequestMappingHandlerAdapter - default
+
+
+
+How to set bean paramter as default - 	public ProductDAO(@Value("sabari") String name) {
+How to set request mapping with default value -     String getName(@RequestParam(value = "person", defaultValue = "John") String personName) {
+
+The default value in @RequestParam will always be String though the variable is int. It will to parsing internally.
+
+
+@ControllerAdvice
+ Golabl exception handling - Single point of exception handling from multiple Back controllers
+ 		//you can have the same Exception handler@ExceptionHandler in controller as well. But priority will be given to that BC instead of Common handler. Hirarchy is important.
+		// parallel to this you can handle the exceptions in BC as well.
+	
+	@ExceptionHandler({ProductNotFoundException.class}) // arg classes can be multiple with comma. Exception.class also can be given
+	
+		@ExceptionHandler({ProductNotFoundException.class}) 
+	public ModelAndView handleProductException(Exception ex) {
+		ModelAndView mv = new ModelAndView("error", "ex", ex);
+		mv.addObject("ex", ex);*///another way
+		return mv;
+	}
+	
+	
+Spring JDBC : 
+
+Its fairly simple. We will create a bean for JDBCTemplate.
+But can we create the JDBCTemplate source automatically thru property ? - No.
+We have to create the Datasource ( ex - DriverManagerDataSource from Spring JDBC ) and set it into JDBC bean creation. 
+
+Then we can use that bean to call update/execute usig queries. create not supported. 
+
+
+	
+	@Bean //Spring JDBC 
+	public DataSource getSource() {//javax.sql.DataSource //oracle wont support to give jar via maven.
+		// Add the JDBC jar library in deployment assembly too
+		// DataSource dataDource = new DataSource();
+		BasicDataSource dataSource = new BasicDataSource();//extended tomcat datasource
+		
+		dataSource.setDriverClassName("oracle.jdbc.OracleDriver");
+		dataSource.setUrl("jdbc:oracle:thin:@10.30.130.52:1521:orcl");//type 4 driver of JDBC. what are other types ?
+		dataSource.setUsername("test31");
+		dataSource.setPassword("oracle");
+		//dataSource.getConnection().setAutoCommit(false);//If you want autocommit to set false
+		return dataSource;//In Spring JDBC, hiberbnate etc etc, we need this Datasource
+		
+	}
+	
+	
+	@Bean // this JDBC template available in Spring JDBC maven jar. Oracle Datasource only not in Maven.
+	public JdbcTemplate getTemplate() { // will be defaultly taken by JdbcTemplate
+	
+		JdbcTemplate jdbcTemplate = new JdbcTemplate(getSource());
+		//jdbcTemplate.getDataSource().getConnection().setAutoCommit(false); If you need autoCommnit false. By default its true
+		return jdbcTemplate;
+	}
+	
