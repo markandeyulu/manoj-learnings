@@ -2,12 +2,15 @@ package com.example.demo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
-@PropertySource(value = {"application-dev.properties", "application-test.properties"})// if you load multiple which is last in the order will picked up if you have same entry unless you mention spring.profiles.active=dev in application.properties or application.yml. If you set that it will take dev. // .yml will not work for this annotation. If you want YML based go for profile based switch
+//@PropertySource(value = {"mark-test.properties", "mark-dev.properties"})
+
+// if you load multiple which is last in the order will picked up if you have same entry unless you mention spring.profiles.active=dev in application.properties or application.yml. 
+// If you set that it will take dev. // .yml will not work for this annotation. 
+// If you want YML based go for profile based switch
 
 
 //@RestController

@@ -1,40 +1,48 @@
 package com.example.demo.beans;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
 public class Product {
 
-	private int productId;
-	private String productName;
-	private float productPrice;
+	@Id
+	private int id;
+	private String name;
+	private float price;
 	
 	public Product() {
 		
 	}
 	
-	public Product(int productId, String productName, float productPrice) {
+	public Product(int id, String name, float price) {
 		super();
-		this.productId = productId;
-		this.productName = productName;
-		this.productPrice = productPrice;
+		this.id = id;
+		this.name = name;
+		this.price = price;
 	}
-	
-	public int getProductId() {
-		return productId;
-	}
-	public void setProductId(int productId) {
-		this.productId = productId;
-	}
-	public String getProductName() {
-		return productName;
-	}
-	public void setProductName(String productName) {
-		this.productName = productName;
-	}
-	public float getProductPrice() {
-		return productPrice;
-	}
-	public void setProductPrice(float productPrice) {
-		this.productPrice = productPrice;
+	public int getId() {
+		return id;
 	}
 
-	
+	public void setId(int id) {
+		this.id = id;
+	}
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+	public float getPrice() {
+		return price;
+	}
+
+	public void setPrice(float price) {
+		this.price = price;
+	}
 }

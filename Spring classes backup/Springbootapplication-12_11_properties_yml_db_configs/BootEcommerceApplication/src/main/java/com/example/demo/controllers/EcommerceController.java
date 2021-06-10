@@ -3,8 +3,6 @@ package com.example.demo.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -13,9 +11,11 @@ import com.example.demo.services.OfferService;
 import com.example.demo.services.ProductService;
 
 @RestController
-public class EcommerceController1 {
+public class EcommerceController {
 
-/*	@Value("${product.offer}")//SPEL //profile value from application-dev.properties. you have to add this in bootclass(BootEcommerceApplication) to let Boot know we have more than one prop file. thats y its an array - @PropertySource(value = {"application-dev.properties"})
+/*	@Value("${product.offer}")//SPEL //profile value from application-dev.properties. 
+ * you have to add this in bootclass(BootEcommerceApplication) to let Boot know we have more than one prop file. 
+ * thats y its an array - @PropertySource(value = {"application-dev.properties"})
 	private float offerPrice;
 	//IOC container cant recognise this value - java.lang.IllegalArgumentException: Could not resolve placeholder 'product.offer' in value "${product.offer}"
 	//it will pick only application.properties or application.yml. So we need to @resource
@@ -40,7 +40,7 @@ public class EcommerceController1 {
 	
 	@GetMapping("/offer")
 	public String getOfferPrice() {
-		return offerService.getOffer()+"Available till" + offerService.getExpiry()+"Days only";
+		return offerService.getOffer()+"Available till" + offerService.getExpiry()+"Days only:: "+offerService.getName()+" == "+offerService.getDesc()+" == "+offerService.getRemarks();
 	}
 	
 	@Autowired
@@ -58,6 +58,11 @@ public class EcommerceController1 {
 		spring.mvc.contentnegotiation.parameter-name=mediaType
 		spring.mvc.pathmatch.use-registered-suffix-pattern=true*/
 		
+	}
+	
+	@GetMapping("/dbProducts")
+	public List<Product> getDBProductDetails() {
+		return productService.getAllProductsFromDB();
 	}
 	
 	

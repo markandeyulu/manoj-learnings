@@ -2,6 +2,8 @@ package com.example.demo.services;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,9 +27,24 @@ public class OfferService {
 
 	
 	//Boot approach //@ConfigurationProperties and getter setters. you dont need seperate getter to return the data
+	@Value("#{${custom.offer} * 5}")
 	private float offer;//same as in property file
+	@Value("#{${custom.expiry} + 10}")
 	private int expiry;//same as in property file
 
+	@Value("${custom.name}")
+	private String name;
+	
+	@Value("#{'${custom.name}'.concat(' asdf Manoj')}")
+	private String desc;
+	
+	ExpressionParser expressionParser = new SpelExpressionParser();
+	private String remarks = expressionParser.parseExpression("'Hello World'.concat('!')").getValue(String.class);
+	
+	public String getRemarks() {
+		return remarks;
+	}
+	
 	public int getExpiry() {
 		return expiry;
 	}
@@ -44,6 +61,20 @@ public class OfferService {
 		this.offer = offer;
 	}
 
+	public String getName() {
+		return name;
+	}
 
-	
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
 }
