@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.beans.Product;
@@ -65,6 +66,53 @@ public class EcommerceController {
 		return productService.getAllProductsFromDB();
 	}
 	
+	@GetMapping("/product/{id}")
+	public Product getProductById(@PathVariable int id) {
+		return productService.getProductById(id);
+	}
+	
+	@GetMapping("/save")
+	public Product saveProduct() {
+		Product product = new Product(3, "Java", 11254.0f);
+		return productService.saveProduct(product);
+	}
+	
+	@GetMapping("/update")
+	public Product updateProduct() {
+		Product product = new Product(3, "Java", 0.0f);
+		return productService.saveProduct(product);
+	}
+	
+	@GetMapping("/delete")
+	public List<Product> deleteProduct() {
+		Product product = new Product(3, "PHP", 0.0f);
+		productService.delete(product);
+		
+		return productService.getAllProductsFromDB();
+	}
+	
+	@GetMapping("/delete/{id}")
+	public List<Product> deleteProduct(@PathVariable int id) {
+		productService.deleteById(id);
+		return productService.getAllProductsFromDB();
+	}
+	
+	@GetMapping("/findByCriteria/{name}")
+	public List<Product> findByCriteria(@PathVariable String name) {
+		//productService.deleteById(id);
+		return productService.findByCriteria(name);
+	}
+	
+	@GetMapping("/findAllActiveProductsNative")
+	public List<Product> findAllActiveProductsNative() {
+		return productService.findAllActiveProductsNative();
+	}
+	
+	@GetMapping("/getProductByNamedNativeQuery/{name}")
+	public Product getProductByNamedNativeQuery(@PathVariable String name) {
+		//productService.deleteById(id);
+		return productService.getProductByNamedNativeQuery(name);
+	}
 	
 	//SOLID, S stands for Single responsibility for a particular class. But we are doing SPEL. but we should only have controller ideally by SOLID approach. so move the code to OfferService.
 }

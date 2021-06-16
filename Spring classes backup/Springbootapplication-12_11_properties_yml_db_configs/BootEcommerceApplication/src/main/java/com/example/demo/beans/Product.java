@@ -1,12 +1,12 @@
 package com.example.demo.beans;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.NamedNativeQuery;
 
 @Entity
+@NamedNativeQuery(name = "Product.findByName", query = "SELECT * FROM Product WHERE name like ?", resultClass = Product.class)
+
 public class Product {
 
 	@Id
