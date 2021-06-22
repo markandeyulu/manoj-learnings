@@ -6,12 +6,20 @@ Dependency injection :
 A bean which is already present in Spring container will be placed in another bean without calling "new" or getBean method. 
 That will be injected automatically.
 
+
+3 topics on autowire : 
+
+1. Dependency Injection ( setter and constructor based(@autowired not needed)
+2. Autowire on property, setter and constructor
+3. Autowire by name and type and constructor ( its by type only )
+
 2 types : 
 1. Constructor based
 2. Setter based
 
 Constructor based : 
 In any class, when it get instantiated, If that class constructor has only the already present object from container, that will be injected. 
+-- you dont need to specify @Autowired here. But if you have multiple constructor, you need @autowired (required =true ) for one. 
 
 I am calling RentalService rentalService1 = (RentalService) context.getBean(RentalService.class);
 Ex 
@@ -26,7 +34,7 @@ Ex
 		this.test = test;
 	}
 	
-But below is not allowed since String is not a qualifying bean
+***But below is not allowed since String is not a qualifying bean. But you can use @Value for premitive types
 RentalService(StoreLocater storeLocator, String test) {
 		this.storeLocator = storeLocator;
 		this.test = test;
@@ -45,12 +53,60 @@ Setter based injection :
 		this.storeLocator = storeLocator;
 			}
 			
-Autowired can be a replacement for both the above approaches : We can do the same simply using autowired
+Autowired can be a replacement for both the above approaches : We can do the same simply using autowired ( autowired on property )
 	@Autowired
 	private StoreLocater storeLocator;
 	
-**Autowire - is not for premitive types and only for objects
+Autowire - is not for premitive types and only for objects
+
+But If you still need @autowired on setter and constructor, we can use based on the need - autowired on setter and constructor. 
+
+***we can use autowiring on properties, setters, and constructors.
+*** If you have premitive type in constructor arg, what will happen ? how you will instantiate that ? 
+			you can using @Value in java based and <constructor-arg> in xml based for premitive types. 
+			
+			  @Autowired
+    public MyBean(@Value("$MYDIR/myfile.xml") final String xmlFile,
+            @Value("$MYDIR/myfile.xsd") final String xsdFile) {
+        this.xmlFile = xmlFile;
+        this.xsdFile = xsdFile;
+    }
 	
+	<bean id="toyota" class="com.baeldung.constructordi.domain.Car">
+    <constructor-arg index="0" ref="engine"/>
+    <constructor-arg index="1" ref="transmission"/>
+	</bean>
+
+*** why we need setter based autowired(its on set of statements) ? In those cases, a setter (or constructor) autowire will suit you better.
+	Class MyClass {
+		private RabbitTemplate template;
+
+		@Autowired - check Mark test
+		void setConnectionFactory(ConnectionFactory c) {
+			template=new RabbitTemplate(c);
+		}
+		}
+
+*** Autowire.constructor not there, Autowire.ByType will do
+		
+*** The autowire option now does nothing, so just remove it. Deprecated as of 5.1
+
+*** Though we mention autowire=Autowire.BY_NAME we need to mention @autowired in the bean class to get injection
+
+***@autowired(required=false) means - In a Spring application, I have used @Autowired(required=false) on constructor. This means that if the bean that will be autowired is not available in the xml file, no NoSuchBeanDefinitionException should be thrown as ( required=false ) is mentioned.Dec 30, 2015
+	- That can be used in multiple construction autowiring as well. 
+		Only one annotated constructor per-class can be marked as required, but multiple non-required constructors can be annotated.
+
+
+
+
+XML based vs Java based in autowire types :
+
+1. autowire by name or by type - In XML based, we can just mention autowire by type or name and in bean class we dont need to specify @Autowired. All beans will be injected.
+2. autowire="constructor" <constructor-arg> is present in xml based but in java based, no autowire.constructor and @Value tag will be used.
+3. Autowire.No - in xml based thats the default. You have to manually inject using "ref" element. In java based its byType and we will use @Autowired.
+
+
 Bean : 
 What is Bean ? 
 	Instead of compiler scans component on every class, we also can tell container to create a bean for a class and store it in a container. 
@@ -354,8 +410,8 @@ The default value in @RequestParam will always be String though the variable is 
 Spring JDBC : 
 
 Its fairly simple. We will create a bean for JDBCTemplate.
-But can we create the JDBCTemplate source automatically thru property ? - No.
-We have to create the Datasource ( ex - DriverManagerDataSource from Spring JDBC ) and set it into JDBC bean creation. 
+But can we create the JDBCTemplate source automatically thru property ? - check it. We have spring properties. spring.database.url like that
+If not, We have to create the Datasource ( ex - DriverManagerDataSource from Spring JDBC ) manually and set it into JDBC bean creation. 
 
 Then we can use that bean to call update/execute usig queries. create not supported. 
 
@@ -365,7 +421,7 @@ Then we can use that bean to call update/execute usig queries. create not suppor
 	public DataSource getSource() {//javax.sql.DataSource //oracle wont support to give jar via maven.
 		// Add the JDBC jar library in deployment assembly too
 		// DataSource dataDource = new DataSource();
-		BasicDataSource dataSource = new BasicDataSource();//extended tomcat datasource
+		BasicDataSource dataSource = new BasicDataSource();//extended tomcat datasource  // BasicDataSource - we can use DriverManagerDataSource as well 
 		
 		dataSource.setDriverClassName("oracle.jdbc.OracleDriver");
 		dataSource.setUrl("jdbc:oracle:thin:@10.30.130.52:1521:orcl");//type 4 driver of JDBC. what are other types ?
@@ -377,7 +433,7 @@ Then we can use that bean to call update/execute usig queries. create not suppor
 	}
 	
 	
-	@Bean // this JDBC template available in Spring JDBC maven jar. Oracle Datasource only not in Maven.
+	@Bean
 	public JdbcTemplate getTemplate() { // will be defaultly taken by JdbcTemplate
 	
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(getSource());
@@ -385,3 +441,777 @@ Then we can use that bean to call update/execute usig queries. create not suppor
 		return jdbcTemplate;
 	}
 	
+DML - need commit
+DDL - no need
+	
+Arraylist in response - you dont need to convert manually and you can just add jackson jar. 
+then Arraylist will come as json or xml by default. 
+
+spring.datasource.url database automation properties will only be used in spring boot not in spring jdbc or jpa
+
+Insert :
+	
+	public boolean addProduct(Product product) {
+		int rows = jdbcTemplate.update("insert into product values(?,?,?)",
+		product.getProdId(),product.getProdName(),product.getProdPrice());
+		//query can be avoided with ORM(hibernate is one of ORM)
+		//Traditionally we go via raw JDBC tamplate. But here we abstract everything into the Jdbc template(in spring jdbc)
+		if(rows > 0) {
+			return true;
+		}
+		
+		return false;
+	}
+
+Select : 
+Rowmapper as well:
+public List<Product> getProducts(){
+        List<Product> products = jdbcTemplate.query("select * from products", new RowMapper<Product>() {
+
+            @Override
+            public Product mapRow(ResultSet rs, int rowNum) throws SQLException {
+                Product p = new Product();
+                p.setProdId(rs.getInt("prodId"));
+                p.setProdName(rs.getString("prodName"));
+                p.setProdPrice(rs.getFloat("prodPrice"));
+                return p;
+            }
+            
+        });
+        return products;
+    }
+	
+Product - does not need to be exact same as columns in table
+
+
+JPA : 
+<!-- https://mvnrepository.com/artifact/org.springframework.data/spring-data-jpa -->
+<dependency>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-jpa</artifactId>
+    <version>2.5.1</version>
+</dependency>
+
+
+
+
+Spring JDBC : 
+whats the advantage than normal ?
+	only advantage is IOC for datasource and jdbcTemplate. And RowMapper.
+
+Spring JPA:
+It is basically a ORM interface. 
+We can do all CRUD operations using JPARepository.
+JPARepository - create an interface extending it and use that to call save, findall,findone methods to get objects or save objects. 
+
+	public List<Player> findAll() {
+		
+		return playerRepositories.findAll();
+	}
+	
+	public Player findByPlayerId(int playerId) {
+		
+		Optional<Player> optional = playerRepositories.findById(playerId);//why optional ? - Java 8 - to avoid null pointer. its enabled with null pointer handling 
+		//Optional is a container object used to contain not-null objects. Optional object is used to represent null with absent value.
+		return optional.get();
+	}
+
+It has @Entity, and we can do all CRUD operations using JPARepository. 
+Can we use JPA without hibernate ? JPA is just an interface. that need one kind of implementation. 
+Hibernate is the implementation of spring JPA which we can use.
+
+
+Spring + JPA (Hibernate) : 
+
+@Bean 
+public DataSource getDataSource() { 
+DriverManagerDataSource dataSource = new DriverManagerDataSource();
+dataSource.setDriverClassName("com.mysql.jdbc.Driver");
+dataSource.setUrl("jdbc:mysql://localhost:3306/productdb");
+dataSource.setUsername("root"); dataSource.setPassword("Welcome@123");
+
+return dataSource; 
+}
+
+@Bean("entityManagerFactory") 
+public LocalContainerEntityManagerFactoryBean getEntityManagerFactory() { // will be defaultly taken by JdbcTemplate
+LocalContainerEntityManagerFactoryBean bean = new LocalContainerEntityManagerFactoryBean();
+bean.setDataSource(getDataSource());
+bean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+
+Properties jpaProperties = new Properties(); 
+jpaProperties.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
+jpaProperties.setProperty("hibernate.show_sql", "true");
+bean.setJpaProperties(jpaProperties );
+
+return bean;
+}
+
+<!-- Configure the transaction manager bean --> for transactions ( update and delete )
+    <bean id="transactionManager"
+          class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory"/>
+    </bean>
+
+Spring + Hibernate : 
+
+@Bean(name="entityManagerFactory")
+public LocalSessionFactoryBean sessionFactory() {
+    LocalSessionFactoryBean sessionFactory = new LocalSessionFactoryBean();
+
+    return sessionFactory;
+} 
+
+
+In hibernate
+
+private Session getSession() {
+		Session session = sessionFactory.getCurrentSession();//session factory created in the Hibernateconfig class
+		return session;
+	}
+
+
+	public boolean save(Player player) {
+		Session session = getSession();
+		Integer i = (Integer)session.save(player);
+		
+		//just check in which cases we will get HQL in sysout and normal SQL in sysouts - ??
+
+		if(i>=1)
+			return true;
+		else
+			return false;
+	}
+
+
+@Transactional - In Hibernate its mandatory but its optional. 
+ORM - will have session manitanance, local cache and we can create some criterias ? 
+Questions:
+Will spring jpa vendor hibernate and hibernate - localentity manager and session factory - will have same way of calling findall save methods ? 
+what is named native query ? JPQL and HQL ?
+HQL - we can create some criterias ? 
+
+
+
+
+
+
+Spring boot : 
+
+@SpringBootApplication
+@RestController - if we need MVC only we need this. or we can give controller separately. 
+public class BootEcommerceApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(BootEcommerceApplication.class, args);
+	}
+	
+		@GetMapping("/welcome")
+	public String getMessage() {//Spring MVC operation can be done easily here // outside of main.
+		return "Welcome to Boot";
+	}
+	
+	
+	
+Inbuilt is tomcat.
+contaxt can be updated here ( in spring its pom.xml ) 
+
+#tomcat port
+server.port=8181
+#usercontext we can set here
+server.servlet.context-path=/sabari
+
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+import org.springframework.boot.SpringApplication;
+
+SAVE - restart automatically
+
+
+ViewResolver is easy here : 
+In spring we need to create the bean manually. to resolve view. 
+
+spring.mvc.view.prefix=/WEB-INF/jsp/
+spring.mvc.view.suffix=.jsp
+
+
+
+ModelMap : org.springframework.ui.ModelMap
+
+@RequestMapping(value = "/login", method = RequestMethod.GET)
+    public String login() {
+        
+        return "login";
+    }
+    
+    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    public String successLogin( @RequestParam String name, @RequestParam String password, ModelMap model) {
+        model.put("name", name);
+        model.put("password", password);
+        
+        if(!service.validateUser(name, password)) {
+            model.put("message", "Invalid Creds");
+            return "login";
+        }
+        return "welcome";
+    }
+	
+	
+-- you can return just view and it will resolve to jsp. and in jsp it will by default can take the ModelMap object. Across all the request. 
+Whats the diff between ModelAndView and ModelMap - -ModelAndView its specific for the respective jsp but ModelMap is common for all requests. 
+
+
+Properties in Spring or Spring boot.
+
+In property source if we give application-dev.properties and application-test.properties 
+and if we mention, spring.profiles.active=test,dev it will consider both.
+and if a same property present in both last one will override the prev one. 
+
+If you have application.yml and application.properties - which will take priority ? 
+application.properties will take priority for same property. and it will take both for non same properties. 
+@PropertySource will not work for .yml.
+
+profile - need name called application.
+
+profile will consider spring.profiles.active order
+If no profile ( no application name in property) it will have @propertySource order.
+
+Can we load custom yml ? we cant do it direct way. We have to implement PropertySourceFactory and override the YamlPropertiesFactoryBean 
+
+why we need yml when we have application properties ?
+
+https://www.geeksforgeeks.org/difference-between-yaml-yml-and-properties-file-in-java-springboot/
+YML has Hierarchical Structure 
+If you are using spring profiles, you can have multiple profiles in one single .yml file
+While retrieving the values from .yml file we get the value as whatever the respective type (int, string etc.) is in the configuration
+@propertysource not applicable for yml
+
+@ConfigurationProperties(prefix = "yaml")
+@PropertySource(value = "classpath:foo.yml", factory = YamlPropertySourceFactory.class)
+
+
+ConfigurationProperties:
+//prefix for the property and getter setter will take care rest
+@ConfigurationProperties(prefix="product")// It is from BOOT exclusively and not in Spring traditional framework
+in properties product.offer = 3.5
+
+
+@Value to set defailt for any variable. This will have only string and expression languages.
+
+SPEL :
+# {} - for expression - does support many, arithmetic, regex, etc
+${} - for prooerty
+
+The Spring Expression Language (SpEL) is a powerful expression language that supports querying and manipulating an object graph at runtime.
+
+@Value(#{${product.offer} - 10}) - test it - This can be used only in @Value. If we need to use this outside, use ExpressionParser.
+
+SpEL supports a wide range of features, such as calling methods, accessing properties, and calling constructors.
+
+https://www.baeldung.com/spring-expression-language
+Read SPelExpressionParser, StandardEvaluationContext.
+
+Remove # and {} - to use SPelExpressionParser.
+
+we can use the expression anywhere other than value using SPelExpressionParser. 
+we can call methods, set values using StandardEvaluationContext.
+
+Also possible,
+List numbers = (List) parser.parseExpression("{1,2,3,4}").getValue();
+List listOfLists = (List) parser.parseExpression("{{'a','b'},{'x','y'}}").getValue();
+Inline Maps, Array construction also possible.
+
+
+Job/Scheduler:
+
+In Spring we can run CronJob using @EnableScheduling and @Scheduled(cron)
+Or we can run scheduled job using org.springframework.scheduling.concurrent.ScheduledExecutorTask - scheduled with delay and such
+we can do the scheduler from java concurrent scheduler as well. with delay we can make it like a cron
+
+
+Single quote is important when we read the string from property for concat
+    @Value("${product.name}")
+    private String name;
+    
+    @Value("#{'${product.name}'.concat(' asdf Manoj')}")
+    private String Desc;
+	
+For integer we dont need single quotes
+
+
+Springboot JDBC: 
+We just need to have properties and autowire JDBC template. thats enough. It will get data source internally. data source will create internally.  
+Driver - we dont need to set. 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+    
+
+    public List<Product> getAllProductsFromDB() {
+        
+        return jdbcTemplate.query("SELECT * FROM products",(rs, rowNum) -> new Product( 
+                rs.getInt("prodId"),
+                rs.getString("prodName"),
+                rs.getFloat("prodPrice")));
+    }
+	
+
+application.properties for datasource ::
+spring.datasource.url=jdbc:mysql://localhost:3306/productdb
+spring.datasource.username=root
+spring.datasource.password=Welcome@123
+
+
+JPA : 
+Only thing you need to do is extend jpa/crud repository. It will internally connect DB
+
+
+public interface ProductRepository extends CrudRepository<Product, Integer> // we can use CRUD or jpa repository in both spring and boot
+JpaRepository extends PagingAndSortingRepository & QueryByExampleExecutor which in turn extends CrudRepository.
+But we can use JpaRepository for better conversion. for ex in CRUD, we have findall returns iterable but in Jpa we have List as return.
+
+If you get error in Could not get constructor for org.hibernate.persister.entity.SingleTableEntityPersister, add javaassist jar.
+
+spring.jpa.hibernate.ddl-auto=create - it will create table every time
+https://stackoverflow.com/questions/42135114/how-does-spring-jpa-hibernate-ddl-auto-property-exactly-work-in-spring
+
+
+JPA - findAll - List<Product>
+ProductRepository extends JPARepository
+@Autowired 
+    ProductRepository productRepository;
+    
+    public List<Product> getAllProductsFromDB() {
+        return productRepository.findAll();
+    }
+	
+findById - id --> id should be null
+findAllById - by many ids
+
+in SB also we need jackson parser to parse xml - we can 
+
+what is findByOne ? 
+	- replaced by findbyId(). If you want multiple criteria's use criteria builder. 
+	- https://www.baeldung.com/jpa-and-or-criteria-predicates
+	- finadAll - sort
+Optional - what is big use ? that also throws error but thats valid error. ispresent there. we can avoid using null. 
+List<Item> items = entityManager.createQuery(criteriaQuery).getResultList();
+
+Question : check what is Example
+
+save() - @transactional and all - not needed. 
+saveAll()
+count()
+
+How you will update ? 
+
+--get by id , edit it and save again. 
+-- or create new object and save. 
+
+Hibernate will do a select query(with productid) during every update and only if value change it will trigger update query. 
+if you update same value, it wont trigger query. 
+Hibernate: select product0_.id as id1_0_0_, product0_.name as name2_0_0_, product0_.price as price3_0_0_ from product product0_ where product0_.id=?
+
+before delete also select query.
+If data is not there, insert that bean and delete. - strange
+If data is not there, insert that id and delete. - not possible - so error will be thrown.
+If data is there, whatever object you give, it will consider only id and trigger delete query with id. wont consider rest params. 
+
+deleteAll() - truncate()
+
+
+Criteria builder - 
+You shouldn't use @Autowired. @PersistenceContext takes care to create a unique EntityManager for every thread. 
+
+
+
+Query(JPQL) vs NativeQuery vs NamedQuery(JPQL) vs NamedNativeQuery vs JPQLMethods vs JPA Criteria API Query
+
+Query : Normal query which we can write in a customised interface with new method(or we can write plain JPQL). 
+@Query(
+  value = "SELECT * FROM USERS u WHERE u.status = 1", 
+  nativeQuery = true)
+Collection<User> findAllActiveUsersNative();
+
+We can write outside of interface as well like 
+public UserEntity getUserByIdWithPlainQuery(Long id) {
+    Query jpqlQuery = getEntityManager().createQuery("SELECT u FROM UserEntity u WHERE u.id=:id");
+    jpqlQuery.setParameter("id", id);
+    return (UserEntity) jpqlQuery.getSingleResult();
+}
+
+Note: If you write method implementation instead if interface @Query annotation, you need to manually typecast. 
+
+We have 2 types. 1 TypedQuery 2. Named Query. 
+1. TypedQuery - you can typecast there itself. 
+2. NamedQuery - While we can dynamically define a Query on specific methods, they can eventually grow into a hard to maintain code base. What if we could keep general usage queries in one centralized, easy to read place?
+
+NamedQuery : It will not be in interface. It will be on topd if entity class. A entity can have multiple queries, each can be having a name which can be called later(having same behaviour as @Query)
+
+
+NativeQuery - A NativeQuery is simply an SQL query. These allow us to unleash the full power of our database, as we can use proprietary features not available in JPQL-restricted syntax.
+This comes at a cost. We lose database portability of our application with NativeQuery because our JPA provider can't abstract specific details from the database implementation or vendor anymore.
+Using NativeQuery doesn't necessarily mean locking ourselves to one specific database vendor. After all, if our queries don't use proprietary SQL commands and are using only a standard SQL syntax, switching providers should not be an issue.
+
+
+@NamedNativeQuery : Same as NamedQuery with NativeQuery features
+
+JPQL - Thats the methods like findAll(), findById(), save(), etc. 
+
+Criteria API Query :
+In JPQL, we cant have mutilple select statements ( like name=x, id=y, price=y) like that. 
+For that what option you have ? - we do have Criteria builder. 
+	casting - not an issue
+
+Do you have any other option ? Yes. you have Query or NativeQuery or NamedQuery or NamedNativeQuery
+One disadvantage using the NativeQuery, NamedNativeQuery -- For one DB to another DB, syntax may vary if it uses DB specific proprietary features.
+So always better to use JPQL and CrteriaBinder.
+
+placeholder - we can use in any type of query. 
+
+entityManager.createQuery
+entityManager.createNamedQuery
+entityManager.createTypedQuery
+etc
+
+Sorting:
+userRepository.findAllUsers(Sort.by("name"));
+- we can do the same in userdefined method as well using Sort method param. 
+JpaSort.unsafe - to userRepository.findAllUsers(JpaSort.unsafe("LENGTH(name)")); - it will append at the end of query as sort by xx.
+When the @Query annotation uses native SQL, then it's not possible to define a Sort and pagination(need bit of more work - adding count query)
+
+
+Criteria API Query : 
+  @Autowired 
+    ProductRepository productRepository;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
+    
+    public List<Product> findByCriteria(String value){
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Product> query = cb.createQuery(Product.class);
+        Root<Product> product = query.from(Product.class);
+
+        Path<String> name = product.get("name");
+        Predicate predicate = cb.like(name, value);
+        query.select(product)
+        .where(predicate);
+        
+        return entityManager.createQuery(query)
+                .getResultList();
+    }
+	
+	
+	
+@Query("SELECT u FROM User u WHERE u.status = 1")
+Collection<User> findAllActiveUsers();  - u -- User bean will be mapped. 
+for native query we have to give *. 
+
+order by has no limitation. But bean based sorting has limitation - it will work only in JPQL.
+Placeholder - native query - ? , JPQL :
+
+single request - when multiple rows returned - unique record not found error. 
+public Product getProductByNamedNativeQuery(String name) {
+        Query q = entityManager.createNamedQuery("Product.findByName");
+        q.setParameter(1, name+'%');
+        return (Product) q.getSingleResult();
+        //return null;
+    }
+
+@Entity
+@NamedNativeQuery(name = "Product.findByName", query = "SELECT * FROM Product WHERE name like ?", resultClass = Product.class)
+
+public class Product {
+
+
+createQuery will accept result type - we can avoid casting. 
+
+Query query=session/entityManager.createQuery("from Emp");  
+query.setFirstResult(5);  
+query.setMaxResult(10);  
+List list=query.list();//will return the records from 5 to 10th number  
+
+Query q=session.createQuery("update User set name=:n where id=:i");  
+q.setParameter("n","Udit Kumar");  
+q.setParameter("i",111);  
+
+Hibernate : 
+
+Query wise - same but here you will use session
+	
+	@Autowired
+	SessionFactory sessionFactory;
+	
+	Only change is sessionFactory. 
+	
+	private Session getSession() {
+		Session session = sessionFactory.getCurrentSession();//session factory created in the Hibernateconfig class
+		return session;
+	}
+	getSession().save() etc .
+	
+	
+@Transactional - is not needed in JPA. But Hibernate its needed. 
+
+WHat is advantage of sessionFactory  and session ?
+JPA vs Hibernate. 
+For Hibernate though we dont use transaction calls like SAVE, we need to have @transactional then only application will get loaded. 
+And in JPA, we have to handle rollback manually whereas in Hibernate it will handle by itself. 
+	
+
+@Transactional(rollbackFor = Exception.class).  -- @Transactional is enough. Not EnableTranctionalManagement 
+rollbackFor = Exception is needed when you need to roll back for non runtime exception. 
+By default it will roll back only for RuntimeExceptions and Error. 
+
+The only difference is that without the rollbackFor = Exception.class it will rollback only for RuntimeExceptions and Error s not for other exceptions that occur. (This is the same for JEE when using EJB and the behavior has been translated to Spring as well).
+
+In JPA : entitymanager(for queries and criteriabinder) or JPARepository ( for methods ) , In Hibernate, its SessionFactory (for all)
+
+why we need @enabletransactionalManagement ? 
+
+JPQL vs HQL 
+The Hibernate Query Language (HQL) and Java Persistence Query Language (JPQL) are both object model focused query languages similar in nature to SQL. JPQL is a heavily-inspired-by subset of HQL. A JPQL query is always a valid HQL query, the reverse is not true however.
+
+No, it's not mandatory to use hibernate. cfg. xml.
+
+        <property name="hibernate.dialect">org.hibernate.dialect.H2Dialect</property>
+
+
+@Entity(name = "ForeignKeyAssoEntity")
+@Table(name = "Employee", uniqueConstraints = {
+@UniqueConstraint(columnNames = "ID"),
+@UniqueConstraint(columnNames = "EMAIL") })
+
+
+session.save(object) -- very imp to remember. 
+
+Simply put, whoever owns the foreign key column gets the @JoinColumn annotation.
+owning side - non owning side
+on non-owning side, they will have mapped by.
+
+Always good to be bi-directional. Specify OnetoMany and ManytoOne on both sides to avoid ambigous.
+https://www.baeldung.com/hibernate-one-to-many
+
+OneToOne
+OnetoMany
+ManyToOne
+
+it helps to understand the concept of an "owning" entity because neither side needs a @JoinTable annotation.
+we can use @joincolumn on owning side and mapped by at non owning side
+
+
+@ManyToMany 
+@JoinTable(name = "singer_instrument", joinColumns = @JoinColumn(name = "SINGER_ID"), inverseJoinColumns = @JoinColumn(name = "INSTRUMENT_ID")) 
+public Set<Instrument> instruments;
+And exactly the same on the other side! Instrument side:
+
+@ManyToMany
+@JoinTable(name = "singer_instrument", joinColumns = @JoinColumn(name = "INSTRUMENT_ID"), inverseJoinColumns = @JoinColumn(name = "SINGER_ID"))
+public Set<Singer> singers;
+
+-- Is that possible ? In this case, no owning side. 
+-- In case of many to many - no owning side always. So its not mandatory to mention mappedby in any side. you can mention jointable on both side and pretend to be owning side both ( but actually no owning side ). 
+You can specify only one side as owning side, which is also not going to make any diff. 
+
+
+But one OnetoMany you must have mappedBy and Joincolumn/Jointable - When you have foriegn key, you should go for JoinTable(JoinColumn and InverseJoinColumn) / @joinColumn to defind owning side. 
+On the other side you need to have mappedby. 
+
+OnetoOne - only one foriegn key - so one side is owning side. 
+
+Owning side - always be a child. In Parent side it is Primary key and in Child side, its a Foriegn key. 
+
+Controller --> Service --> DAO
+
+CascadeType.PERSIST or ALL - to save the child objects as well along with parent. 
+*** pending
+
+
+
+------------------------------
+Spring Security : 
+
+SESSION MANAGEMENT : If you login with one user, unless clear cache, you are always the current user. 
+add spring security dependency in pom. 
+
+We have to create @Configuration class with extending 
+
+@Configuration
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter 
+
+override 2 configure methods. 
+
+	@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		
+		PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+		
+		
+		auth.inMemoryAuthentication().passwordEncoder(encoder) // we can create JDBC authentication as well
+		.withUser("manoj").password(encoder.encode("manojpwd")).roles("ADMIN") // we can use {noop}manojpwd as well if we dint want to encode the pwd. 
+		.and()
+		.withUser("mark").password(encoder.encode("markpwd")).roles("USER")
+		.and()
+		.withUser("testuser").password(encoder.encode("testpwd")).roles("TEMP");
+	}
+
+	@Autowired
+	AccessDeniedHandler accessDeniedHandler;
+	
+			http.authorizeRequests()
+		.antMatchers("/getUserName").permitAll()
+		.antMatchers("/getPassword").hasRole("ADMIN")
+		.antMatchers("/getClientId").hasRole("USER")
+		//.anyRequest().permitAll() // commenting this also same. allowing all the non ant matcher urls without auth
+		.anyRequest().authenticated() // This will make all the URLs to get authenticated.  - Any role cred will be working
+		.and()
+		.formLogin()// we can give customised form as well
+		.and()
+		.csrf().disable()
+		.exceptionHandling()
+		.accessDeniedHandler(accessDeniedHandler);
+		
+
+
+@Component
+public class UserExceptionHandler implements AccessDeniedHandler{
+
+
+
+JDBC auth : 
+
+ auth.jdbcAuthentication()
+    .dataSource(dataSource)
+    .usersByUsernameQuery(userbyUsernameQuery)
+.authoritiesByUsernameQuery(rolebyUsernameQuery)
+.passwordEncoder(passwordEncoder());
+
+
+
+
+Logging:
+
+Log4J - kind of discontinued - now Logback as successsor - SB - default.
+SLFJ is just an interface. Log4J or LogBack is an implementation.
+2 dependencies needed - starter-logging and spting jcl
+
+default in SB - INFO. 
+
+trace is not level of INFO. 
+logging.level.root=TRACE
+
+logging.level.root=INFO
+logging.level.io.manoj=TRACE
+
+logback-spring.xml or logback.xml
+
+Logging level priorities:
+TRACE
+DEBUG
+INFO
+WARN
+ERROR
+FATAL
+OFF
+
+You cant set consoleappender logging - you can specify which logging level should come in console and pattern. 
+
+2 imp things.
+1 - appender
+2 - logger levels.
+
+ <property name="LOGS" value="./logs" />
+ inside appender -  <file>${LOGS}/manoj-spring-boot-logger.log</file>
+ 
+ ----
+ <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<property name="LOGS" value="./logs" />
+
+	<appender name="Console"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<!-- <file>${LOGS}/manoj-sysout.log</file> -->
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>
+				%black(%d{ISO8601}) %highlight(%-5level) [%blue(%t)] %yellow(%C{1.}): %msg%n%throwable
+			</Pattern>
+		</layout>
+	</appender>
+
+
+	<appender name="RollingFile"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOGS}/manoj-spring-boot-logger.log</file>
+		<encoder
+			class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<Pattern>%d %p %C{1.} [%t] %m%n</Pattern>
+		</encoder>
+
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- rollover daily and when the file reaches 10 MegaBytes -->
+			<fileNamePattern>${LOGS}/archived/manoj-spring-boot-logger-%d{yyyy-MM-dd}.%i.log
+			</fileNamePattern>
+			<timeBasedFileNamingAndTriggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<maxFileSize>1KB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+	</appender>
+
+
+	<root level="error">
+		<appender-ref ref="RollingFile" />
+		<appender-ref ref="Console" />
+	</root>
+
+	<logger name="com.employee.controller" level="error"
+		additivity="false">
+		<appender-ref ref="RollingFile" />
+		<appender-ref ref="Console" />
+	</logger>
+
+
+</configuration>
+---
+
+org.apache.log4j.FileAppender
+org.apache.log4j.RollingFileAppender
+	 - TimeBasedRollingPolicy
+	 - SizeAndTimeBasedPolicy
+	 - SizeBasedTriggeringPolicy
+	 - FixedWindowRollingPolicy
+SMTPAppender
+DBAppender
+
+TriggeringPolicy implementations are responsible for instructing the RollingFileAppender when to rollover.
+
+
+
+SizeBasedTriggeringPolicy
+additivity - will not get the parent inheritance
+----
+
+In log4j.properties approach,
+Appender:
+log4j.appender.UpstreamSoapCall=org.apache.log4j.RollingFileAppender
+log4j.appender.UpstreamSoapCall.File=logs/UpstreamSoapCall.log
+log4j.appender.UpstreamSoapCall.MaxFileSize=10240KB
+log4j.appender.UpstreamSoapCall.MaxBackupIndex=5
+log4j.additivity.com.forddirect.services.util.ServiceAdaptorsUtil = false
+
+log4j.logger.com.forddirect.services.soap=INFO, UpstreamSoapCall
+
+log4j deprecated and came logback. we can use Log4j2 if performance needed most. 
+
+
+http://logback.qos.ch/manual/layouts.html - patterns 
+
+%d %p %C{1.} [%t] %m%n
+
+2021-06-22 19:45:08,465 WARN com.employee.controller.StudentController [http-nio-8181-exec-4] WARN LOGGER from STUDENT CONTROLLER

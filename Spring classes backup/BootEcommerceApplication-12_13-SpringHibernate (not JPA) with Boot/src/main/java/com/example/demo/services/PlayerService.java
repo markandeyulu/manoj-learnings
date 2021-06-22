@@ -16,7 +16,12 @@ public class PlayerService {
 	
 	//CRUD operations
 	public boolean save(Player player) {
-		return playerDAO.save(player);
+		try {
+			return playerDAO.save(player);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 	
 	public List<Player> findAll() {

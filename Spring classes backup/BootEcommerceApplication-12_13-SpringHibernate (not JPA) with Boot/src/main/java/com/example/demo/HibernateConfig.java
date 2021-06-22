@@ -11,8 +11,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.orm.hibernate5.HibernateTransactionManager;//see carefully. Its not hibernate jars. its spring integrated with Hibernate. This is not JPA. This is Spring integrated with hibernate.
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;//see carefully. Its not hibernate jars. its spring integrated with Hibernate. This is not JPA. This is Spring integrated with hibernate.
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 //Hibernate is an ORM which is connecting to DB(H2) here
 @Configuration
+@EnableTransactionManagement
 public class HibernateConfig {
 
 	// 	//step 1 : Create Datasource (Boot will do automatically)

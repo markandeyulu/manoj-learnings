@@ -1,5 +1,6 @@
 package com.example.demo.dao;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import javax.persistence.Query;
@@ -13,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.entities.Player;
 
 @Repository
-@Transactional
+@Transactional(rollbackFor = {SQLException.class})
 public class PlayerDAO {
 
 	private Session getSession() {
@@ -25,9 +26,22 @@ public class PlayerDAO {
 	SessionFactory sessionFactory;
 	
 	// replica of what we have in PlayerService
-	public boolean save(Player player) {
+	public boolean save(Player player) throws Exception {
 		Session session = getSession();
+		
 		Integer i = (Integer)session.save(player);
+		throw new SQLException("DEMO TRX management...!");
+		/*
+		 * Transaction tx = null; Integer i = 0; try { tx = session.beginTransaction();
+		 * i = (Integer)session.save(player); //i = (Integer)session.save(player); //i =
+		 * (Integer)session.save(player); throw new
+		 * Exception("DEMO TRX management...!");
+		 * 
+		 * } catch (Exception e) { if (tx!=null) tx.rollback(); e.printStackTrace();
+		 * //throw e; } tx.commit();
+		 */
+		//if(i>=1) return true; else return false;
+		
 		// Spring data JPA will provide readymade methods. JPA repository, CRUD repsitory, MANGO repository. The logics will be writted in Spring JPA's. Relevent to the entity it will automatically run the query and return data. we need @Repository for this. Even in Spring JPA's if you want your own Hibernate queries you can write HQL,Namedqueries or Creteria queries.
 		// we are not using any transaction here like hibernate (we are using @Transactional-Spring integrated with hibernate)
 		//session.close();// using same session for all methods
@@ -35,10 +49,13 @@ public class PlayerDAO {
 		
 		//just check in which cases we will get HQL in sysout and normal SQL in sysouts - ??
 
-		if(i>=1)
-			return true;
-		else
-			return false;
+		/*
+		 * i = (Integer)session.save(player); i = (Integer)session.save(player); throw
+		 * new Exception("DEMO TRX management...!");
+		 */
+		/*
+		 * if(i>=1) return true; else return false;
+		 */
 	}
 	
 	public List<Player> findAll() {
