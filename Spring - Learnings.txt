@@ -1215,3 +1215,148 @@ http://logback.qos.ch/manual/layouts.html - patterns
 %d %p %C{1.} [%t] %m%n
 
 2021-06-22 19:45:08,465 WARN com.employee.controller.StudentController [http-nio-8181-exec-4] WARN LOGGER from STUDENT CONTROLLER
+
+
+
+
+
+
+
+Interceptor:
+https://www.tutorialspoint.com/spring_boot/spring_boot_interceptor.htm
+Before sending the request to the controller ( request validation )
+Before sending the response to the client ( response header addition )
+
+If you need to do something that could affect the request or response to your application such as logging, security, audit, or you will affect the data coming on them, your option is filter.
+
+https://stackoverflow.com/questions/35686363/filters-vs-interceptors-in-web-application
+
+Filter - implements Filter- you will have doFilter() method. you can keep that in try finally and do pre post final things.  or you can do it in destroy method as well. 
+	public void init(FilterConfig filterConfig) throws ServletException {
+        // do nothing init(FilterConfig paramFilterConfig) – When container initializes the Filter, this is the method that gets invoked. This method is called only once in the lifecycle of filter and we should initialize any resources in this method.
+		
+		// during server startup itself
+		
+		filterConfig - you can add properties upfront if needed
+    }
+
+    public void destroy() {
+        // do nothing - destroy() method. This is the method where we can close any resources opened by filter.
+		void destroy() – When container offloads the Filter instance, it invokes the destroy() method. This is the method where we can close any resources opened by filter. This method is called only once in the lifetime of filter.
+		
+		--Filter.destroy called during shutdown by default to destroy the filter memory, unless explicitely mention do nothing like NGP.
+    }
+Interceptor - extends HandlerInterceptorAdaptor - you will have preHandle(req, resp, handler) and postHandle(req,resp,handler, modelandview) and afterCompletion(xx) as well. 
+	- modelAndView.setViewName("student"); - you can change the view name in posthandle if response is modelandview
+
+Authentication - web layer - web.xml filter
+Logging or request validation - service layer - Interceptor. 
+Interceptor can be placed in applicationcontext.xml or dispatcherServlet.xml ( it is mvc method )
+
+Interceptor - mapping(/**/manoj) and bean
+Filter - Filter name, class and in Filtermapping, fintername and url pattern
+
+How to implement that in SpringBoot ? 
+@Component
+public class ProductServiceInterceptorAppConfig extends WebMvcConfigurerAdapter {
+   @Autowired
+   ProductServiceInterceptor productServiceInterceptor;
+
+   @Override
+   public void addInterceptors(InterceptorRegistry interceptorRegistry) {
+      interceptorRegistry.addInterceptor(productServiceInterceptor);
+   }
+}
+
+@Component
+public class SampleInterceptor extends HandlerInterceptorAdapter {
+
+	@Override
+	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+			throws Exception {
+		System.out.println("Into prehandle interceptor");
+		return true;
+	}
+	
+Filter - chain.doFilter(request,response)
+Interceptor - return true. 
+
+
+Execution flow : 
+#during server startup
+into filter init method
+
+during request execution,
+Into doFilter
+Into prehandle interceptor
+Into controller
+into posthandle interceptor  -- response written after this stage
+into aftercomplettion interceptor
+Into doFilter post chain forwarding
+
+
+--Filter.destroy called during shutdown by default to destroy the filter memory, unless explicitely mention do nothing like NGP.
+
+
+
+
+
+
+Scheduling : 
+
+In Spring xml based,
+
+xmlns:task="http://www.springframework.org/schema/task" and schemalocation http://www.springframework.org/schema/task
+
+  <task:scheduler id="myScheduler"/>
+  
+  <task:scheduled-tasks scheduler="myScheduler">
+        <task:scheduled ref="myBean" method="printMessage" fixed-delay="5000" />
+    </task:scheduled-tasks>
+	
+	<task:scheduled-tasks scheduler="myScheduler">
+    <task:scheduled ref="myBean" method="method2" fixed-delay="5000" initial-delay="1000"/>
+    <task:scheduled ref="Bean2" method="method2" fixed-rate="30000" />
+    <task:scheduled ref="Bean3" method="method3" cron="*/5 * * * * MON-FRI"/>
+	</task:scheduled-tasks>
+	
+In Spring java based - @Scheduled will handle all these. 
+
+In NGP 
+    <bean id="scheduledLeadResenderScheduledTasks" class="org.springframework.scheduling.concurrent.ScheduledExecutorTask" autowire="no">
+	    <!-- This is to allow the server to startup and the tasks to be initialised -->
+    	<property name="delay" value="300000" />    	
+	    <!-- run every half hour (1800 secs) -->
+	    <property name="period" value="1800000"></property> 
+	    <property name="runnable" ref="leadResenderScheduledTasks"></property>
+    </bean>
+    
+
+The ScheduledExecutorService does not offer more sophisticated scheduling options such as cron expressions. Consider using ThreadPool-TaskScheduler for such needs.
+
+There are 2 things. 
+1 - Task scheduler
+2 - Task Executer ( NGP is using concurrent.ScheduledExecutorTask)
+TaskScheduler will have only one thread. If you need multiple threads, go for Executer. 
+TaskScheduler will have cron but nit concurrent scheduler. 
+
+But later spring upgraded that task scheduler can have spring.task.scheduling.pool.size=10
+
+
+Task Scheduler properties : 
+Initial Delay
+Fixed Delay : specifically controls the next execution time when the last execution finishes.
+Fixed Rate : makes Spring run the task on periodic intervals even if the last invocation may be still running.
+Cron 
+Year is not mandatory
+
+second, min, hr, DOM, MON, DOW, YEAR
+*/10 * * * ? - every 10 seconds
+10 * * * * ? - only 10th second of every min
+
+By default the scheduler will have only one thread. it will simplay wait and wont execute others till waiting and will execute only if timer permits. If you want you have to increase the threads by 
+spring.task.scheduling.pool.size=2.
+
+@Async @EnableAsync(class level)- will execute as many parallel threads. Danger. 
+
+We know Spring XML based Executor, Scheduler and Spring boot Scheduler - not Java based in Spring. 

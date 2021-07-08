@@ -1,0 +1,140 @@
+  
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
+		<spring-cloud.version>Edgware.RELEASE</spring-cloud.version>  // latest is Greenwich.release for spring boot 2.1.0
+	</properties>
+	  
+	<dependencyManagement>
+      <dependencies>
+         <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-dependencies</artifactId>
+            <version>${spring-cloud.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
+      </dependencies>
+   </dependencyManagement>
+   
+  
+Pom : 
+
+	<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-eureka-server</artifactId>
+		</dependency>
+ 
+
+server.port=8761
+eureka.client.registerWithEureka=false // for spring 2.1.0 - this will slightly change
+eureka.client.fetchRegistry=false
+
+-- normal url also will work
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+@EnableEurekaServer - makes it as Eureka server
+
+
+
+Client:
+same dependencies as server but, pom 
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-eureka</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>//needed
+		
+EurekaClient1 - Class name cant be EurekaClient
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+@EnableEurekaClient	
+
+eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka   --this is enough
+eureka.instance.preferIpAddres=true
+I want to register my micro services in Eureka with the IP address instead of host name.
+
+
+/eureka - added additionally 
+
+spring.application.name=eurekaclientsample - This is the name you will see in Eureka Server
+
+1st server should start and client. 
+or if client restarts, server will pick the changes
+
+
+Config Server:
+@EnableConfigServer
+
+same dependencies as others and 
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-config-server</artifactId>
+		</dependency>
+		
+spring.profiles.active=native - for local. If not you have to use git
+
+Change application.properties to bootstrap.properties - when you load external content. 
+For local,
+spring.profiles.active=native // saying local
+spring.cloud.config.server.native.searchLocations=file:///C:/configprop/
+
+For git, 
+
+spring.cloud.config.server.git.uri=https://github.com/spring-cloud-samples/config-repo
+-- we can give username pwd also
+
+You have to place the client application name.properties in this path (spring.application.name=eurekaclientsample in client properties)
+http://localhost:8888/eurekaclientsample/default/master
+
+
+Config client: 
+@RefreshScope
+
+Same as above and add,
+			<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-config</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId> // for refresh
+		</dependency>
+		
+				<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		
+spring.cloud.config.uri=http://localhost:8888
+
+you can set the same property in your local and config server. Config server will take priority.
+
+In config server, you can have multiple properties for multiple profiles. 
+like -dev, -test properties like that. 
+
+In spring boot 1.5.9, server.contextPath=/manoj not server.servlet.context-path=/manoj(2.1.0)
+
+http://chivp141-024165.ppp.ford.com:8001/manoj2/refresh -- actuator/ refresh - to reflect the changes from config server without restart.
+This is a POST request. 
+If you dont have security, management.security.enabled=false
+
+
+If you have multiple profiles that to be loaded in client from config server, use bootstrap.properties in client.
+why you should use bootstrap properties in spring cloud?
+The bootstrap context is responsible for loading configuration properties from the external sources and for decrypting properties in the local external configuration files.
+
+@Profile - we can use that only to create bean on respective env. 
+
+If you change anything in client, both config and eureka server will get refreshed
+
+We can register config server also with Eureka - just set eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka and add annotation. Thats it.
+
+
+If come client is getting added newly, just restart the eureka server to avoid any issues.
+
+Config server lloks for change every sec - no need for any restarts.
